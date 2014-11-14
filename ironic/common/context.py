@@ -18,39 +18,37 @@ from ironic.openstack.common import context
 class RequestContext(context.RequestContext):
     """Extends security contexts from the OpenStack common library."""
 
-    def __init__(self, auth_token=None, domain_id=None, domain_name=None,
-                 user=None, tenant=None, is_admin=False, is_public_api=False,
-                 read_only=False, show_deleted=False, request_id=None):
+    def __init__(self, auth_token=None, user=None, tenant=None, domain=None,
+                 user_domain=None, project_domain=None, is_admin=False,
+                 read_only=False, show_deleted=False, request_id=None,
+                 instance_uuid=None, is_public_api=False):
         """Stores several additional request parameters:
 
-        :param domain_id: The ID of the domain.
-        :param domain_name: The name of the domain.
         :param is_public_api: Specifies whether the request should be processed
                               without authentication.
 
         """
-        self.is_public_api = is_public_api
-        self.domain_id = domain_id
-        self.domain_name = domain_name
-
         super(RequestContext, self).__init__(auth_token=auth_token,
-                                             user=user, tenant=tenant,
+                                             user=user,
+                                             tenant=tenant,
+                                             domain=domain,
+                                             user_domain=user_domain,
+                                             project_domain=project_domain,
                                              is_admin=is_admin,
                                              read_only=read_only,
                                              show_deleted=show_deleted,
-                                             request_id=request_id)
+                                             request_id=request_id,
+                                             instance_uuid=instance_uuid)
+
+        self.is_public_api = is_public_api
 
     def to_dict(self):
-        return {'auth_token': self.auth_token,
-                'user': self.user,
-                'tenant': self.tenant,
-                'is_admin': self.is_admin,
-                'read_only': self.read_only,
-                'show_deleted': self.show_deleted,
-                'request_id': self.request_id,
-                'domain_id': self.domain_id,
-                'domain_name': self.domain_name,
-                'is_public_api': self.is_public_api}
+        base_dict = super(RequestContext, self).to_dict()
+        ext = {'is_public_api': self.is_public_api}
+
+        base_dict.update(ext)
+
+        return base_dict
 
     @classmethod
     def from_dict(cls, values):
